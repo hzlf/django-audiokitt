@@ -1,0 +1,6 @@
+# base modules
+Django==1.9.6
+djangorestframework==3.3.3
+django_extensions==1.6.7
+django_compressor==2.0
+django-authtools==1.5.0
