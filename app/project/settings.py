@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_rq',
     'authtools',
     'base',
     'compressor',
@@ -100,8 +101,24 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
-    ]
+    ],
+    'DEFAULT_MODEL_SERIALIZER_CLASS': [
+        'rest_framework.serializers.HyperlinkedModelSerializer',
+    ],
 
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1000/day',
+        'user': '60/minute'
+    }
+
+}
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+    }
 }
 
 
@@ -179,34 +196,37 @@ LOGGING = {
                 'CRITICAL': 'bold_red',
             },
         },
+        "rq_console": {
+            "format": "%(asctime)s %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
+
     },
     'handlers': {
         'console':{
-            'level':'DEBUG',
             'class':'logging.StreamHandler',
-            'formatter': 'standard'
-            #'formatter': 'standard'
+            'formatter': 'colored'
+        },
+        "rq_console": {
+            "class": "rq.utils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "exclude": ["%(asctime)s"],
         },
     },
     'loggers': {
         'audiokitt': {
             'handlers':['console',],
-            'propagate': True,
+            'propagate': False,
             'level':'DEBUG',
-        },
-        'django': {
-            'handlers':['console',],
-            'propagate': True,
-            'level':'WARNING',
         },
         'django.request': {
             'handlers':['console',],
             'propagate': True,
             'level':'WARNING',
         },
-        '': {
-            'handlers': ['console',],
-            'level': 'WARNING',
+        "rq.worker": {
+            "handlers": ["rq_console",],
+            "level": "DEBUG"
         },
     }
 }

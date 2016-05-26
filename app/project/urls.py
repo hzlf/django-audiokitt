@@ -23,6 +23,7 @@ from .urls_api import router
 urlpatterns = [
     url(r'^api/v1/', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^django-rq/', include('django_rq.urls')),
     #url(r'^api/audiokitt/', include('audiokitt.urls', namespace='audiokitt')),
     url(r'^admin/', admin.site.urls),
 ]

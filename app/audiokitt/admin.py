@@ -4,13 +4,11 @@ from .models import Analyse, Inquiry
 
 
 class BaseAdmin(admin.ModelAdmin):
-
     save_on_top = True
 
 
 @admin.register(Inquiry)
 class InquiryAdmin(BaseAdmin):
-
     list_display = [
         '__str__',
         'user',
@@ -23,8 +21,6 @@ class InquiryAdmin(BaseAdmin):
         'created',
         'analyse__status',
     ]
-
-
 
 
 admin.site.register(Analyse)

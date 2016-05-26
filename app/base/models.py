@@ -2,15 +2,18 @@
 from __future__ import unicode_literals
 
 import logging
+import uuid
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch.dispatcher import receiver
+from django.db import models
 from authtools.models import AbstractEmailUser
 from rest_framework.authtoken.models import Token
 
 log = logging.getLogger(__name__)
 
 class User(AbstractEmailUser):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     class Meta(AbstractEmailUser.Meta):
         swappable = 'AUTH_USER_MODEL'
         verbose_name = _('user')
