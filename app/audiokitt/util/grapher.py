@@ -229,8 +229,6 @@ def interpolate_colors(colors, flat=False, num_colors=256):
         index_int = int(index)
         alpha = index - float(index_int)
 
-        print alpha
-
         if alpha > 0:
             r = (1.0 - alpha) * colors[index_int][0] + alpha * colors[index_int + 1][0]
             g = (1.0 - alpha) * colors[index_int][1] + alpha * colors[index_int + 1][1]
@@ -407,8 +405,6 @@ class SpectrogramImage(object):
 
         self.palette = interpolate_colors(colors, flat=False, num_colors=256)
 
-        print self.palette
-
         # generate the lookup which translates y-coordinate to fft-bin
         self.y_to_bin = []
         f_min = 100.0
@@ -471,7 +467,7 @@ def create_waveform_image(src, dst):
         # hackish... set to 1 to make monochrome
         spectral_centroid = 1
 
-        print (peaks, spectral_centroid)
+        #print (peaks, spectral_centroid)
 
         waveform.draw_peaks(x, peaks, spectral_centroid)
 
