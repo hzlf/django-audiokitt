@@ -20,6 +20,6 @@ include(
     'components/12-db.py',
     'components/13-api.py',
     'components/30-logging.py',
-    include(site_settings),
+    site_settings,
     scope=locals()
 )
