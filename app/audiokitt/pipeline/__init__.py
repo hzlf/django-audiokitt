@@ -1,6 +1,11 @@
+# -*- coding: utf-8 -*-
+
 
 import essentia.standard
 from essentia.standard import *
+
+from django.conf import settings
+
 from ..util import module_member
 
 
@@ -12,6 +17,8 @@ DEFAULT_PIPELINE = [
     'audiokitt.pipeline.essentia_extractors.level',
     'audiokitt.pipeline.visualise.peaks',
 ]
+
+PIPELINE = getattr(settings, 'AUDIOKITT_PIPELINE', DEFAULT_PIPELINE)
 
 
 
