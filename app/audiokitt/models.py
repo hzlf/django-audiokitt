@@ -83,11 +83,8 @@ class Analyse(StatusModelMixin, TimestampedModelMixin, models.Model):
         log.debug('processing pk: {}'.format(self.pk))
         Analyse.objects.filter(pk=self.pk).update(status=Analyse.STATUS_PROCESSING)
 
-        data = run_processing_pipeline(self)
+        run_processing_pipeline(self)
 
-        print(data)
-
-        pass
 
     def save(self, skip_apply_import_tag=False, *args, **kwargs):
 
