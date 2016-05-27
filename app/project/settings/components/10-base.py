@@ -8,6 +8,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+HOSTNAME = 'local.audiokitt'
+
 LANGUAGE_CODE = 'en'
 
 TIME_ZONE = 'UTC'

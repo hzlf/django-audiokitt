@@ -11,7 +11,7 @@ app/env
 changelog.txt
 app/project/local_settings.py
 app/smedia
-app/db.sqlite3
+*db.sqlite3
 app/logs
 app/media
 app/components

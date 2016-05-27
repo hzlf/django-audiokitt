@@ -4,9 +4,7 @@
 # from __future__ import unicode_literals
 
 import os
-import logging
 from split_settings.tools import optional, include
-log = logging.getLogger(__name__)
 site_settings = os.path.join(os.getcwd(), 'project/local_settings.py')
 
 try:
@@ -22,6 +20,6 @@ include(
     'components/12-db.py',
     'components/13-api.py',
     'components/30-logging.py',
-    optional(site_settings),
+    include(site_settings),
     scope=locals()
 )
