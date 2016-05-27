@@ -1,6 +1,6 @@
+import os
 
 import magic
-import os
 
 
 def fileinfo(path, audio):

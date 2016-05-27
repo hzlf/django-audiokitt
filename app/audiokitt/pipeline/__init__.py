@@ -1,8 +1,7 @@
-import importlib
-import sys
-import essentia
-from essentia.standard import *
+
 import essentia.standard
+from essentia.standard import *
+from ..util import module_member
 
 
 DEFAULT_PIPELINE = [
@@ -14,14 +13,7 @@ DEFAULT_PIPELINE = [
     'audiokitt.pipeline.visualise.peaks',
 ]
 
-def import_module(name):
-    __import__(name)
-    return sys.modules[name]
 
-def module_member(name):
-    mod, member = name.rsplit('.', 1)
-    module = import_module(mod)
-    return getattr(module, member)
 
 class Pipeline(object):
 
@@ -30,20 +22,13 @@ class Pipeline(object):
         self.audio = None
         self.tasks = tasks or DEFAULT_PIPELINE
 
-
     def audio_from_path(self, path):
 
         mono_loader = essentia.standard.MonoLoader(filename=path, sampleRate=8000)
         mono_audio = mono_loader()
-
-        stereo_loader = essentia.standard.AudioLoader(filename=path)
-        stereo_audio = stereo_loader()
-
         essentia.standard.MonoWriter(filename=path + '.wav')(mono_audio)
 
-
         return mono_audio
-
 
     def run(self):
 

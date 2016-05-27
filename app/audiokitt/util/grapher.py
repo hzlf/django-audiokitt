@@ -20,9 +20,8 @@
 # Authors:
 #   Bram de Jong <bram.dejong at domain.com where domain in gmail>
 
-from functools import partial
 import math
-import os
+
 import numpy
 from PIL import Image, ImageDraw, ImageColor
 
@@ -32,6 +31,7 @@ try:
     import scikits.audiolab as audiolab
 except ImportError:
     print "WARNING: audiolab is not installed so wav2png will not work"
+
 
 def get_max_level(filename):
     max_value = 0
@@ -50,7 +50,7 @@ def get_max_level(filename):
 
         # convert to mono by selecting left channel only
         if audio_file.channels > 1:
-            samples = samples[:,0]
+            samples = samples[:, 0]
 
         max_value = max(max_value, numpy.abs(samples).max())
 
@@ -60,11 +60,13 @@ def get_max_level(filename):
 
     return max_value
 
+
 class AudioProcessor(object):
     """
     The audio processor processes chunks of audio an calculates the spectrac centroid and the peak
     samples in that chunk of audio.
     """
+
     def __init__(self, input_filename, fft_size, window_function=numpy.hanning):
         max_level = get_max_level(input_filename)
 
@@ -82,7 +84,7 @@ class AudioProcessor(object):
         fft = numpy.fft.rfft(numpy.ones(fft_size) * self.window)
         max_fft = (numpy.abs(fft)).max()
         # set the scale to normalized audio and normalized FFT
-        self.scale = 1.0/max_level/max_fft if max_level > 0 else 1
+        self.scale = 1.0 / max_level / max_fft if max_level > 0 else 1
 
     def read(self, start, size, resize_if_less=False):
         """ read size samples starting at start, if resize_if_less is True and less than size
@@ -99,7 +101,7 @@ class AudioProcessor(object):
             else:
                 self.audio_file.seek(0)
 
-                add_to_start = -start # remember: start is negative!
+                add_to_start = -start  # remember: start is negative!
                 to_read = size + start
 
                 if to_read > self.audio_file.nframes:
@@ -121,12 +123,12 @@ class AudioProcessor(object):
 
         # convert to mono by selecting left channel only
         if self.audio_file.channels > 1:
-            samples = samples[:,0]
+            samples = samples[:, 0]
 
         if resize_if_less and (add_to_start > 0 or add_to_end > 0):
             if add_to_start > 0:
-                #samples = numpy.concatenate((numpy.zeros(add_to_start), samples), axis=1)
-                samples = numpy.concatenate((numpy.zeros(add_to_start), samples), axis=0) # ???
+                # samples = numpy.concatenate((numpy.zeros(add_to_start), samples), axis=1)
+                samples = numpy.concatenate((numpy.zeros(add_to_start), samples), axis=0)  # ???
 
             if add_to_end > 0:
                 samples = numpy.resize(samples, size)
@@ -134,19 +136,18 @@ class AudioProcessor(object):
 
         return samples
 
-
     def spectral_centroid(self, seek_point, spec_range=110.0):
         """ starting at seek_point read fft_size samples, and calculate the spectral centroid """
 
-        samples = self.read(seek_point - self.fft_size/2, self.fft_size, True)
+        samples = self.read(seek_point - self.fft_size / 2, self.fft_size, True)
 
         samples *= self.window
         fft = numpy.fft.rfft(samples)
-        spectrum = self.scale * numpy.abs(fft) # normalized abs(FFT) between 0 and 1
+        spectrum = self.scale * numpy.abs(fft)  # normalized abs(FFT) between 0 and 1
         length = numpy.float64(spectrum.shape[0])
 
         # scale the db spectrum from [- spec_range db ... 0 db] > [0..1]
-        db_spectrum = ((20*(numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range)/spec_range
+        db_spectrum = ((20 * (numpy.log10(spectrum + 1e-60))).clip(-spec_range, 0.0) + spec_range) / spec_range
 
         energy = spectrum.sum()
         spectral_centroid = 0
@@ -154,16 +155,17 @@ class AudioProcessor(object):
         if energy > 1e-60:
             # calculate the spectral centroid
 
-            if self.spectrum_range == None:
+            if not self.spectrum_range:
                 self.spectrum_range = numpy.arange(length)
 
-            spectral_centroid = (spectrum * self.spectrum_range).sum() / (energy * (length - 1)) * self.audio_file.samplerate * 0.5
+            spectral_centroid = (spectrum * self.spectrum_range).sum() / (
+            energy * (length - 1)) * self.audio_file.samplerate * 0.5
 
             # clip > log10 > scale between 0 and 1
-            spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (self.higher_log - self.lower_log)
+            spectral_centroid = (math.log10(self.clip(spectral_centroid, self.lower, self.higher)) - self.lower_log) / (
+            self.higher_log - self.lower_log)
 
-        return (spectral_centroid, db_spectrum)
-
+        return spectral_centroid, db_spectrum
 
     def peaks(self, start_seek, end_seek):
         """ read all samples between start_seek and end_seek, then find the minimum and maximum peak
@@ -223,12 +225,11 @@ def interpolate_colors(colors, flat=False, num_colors=256):
     include_alpha = True
 
     for i in range(num_colors):
-        index = (i * (len(colors) - 1))/(num_colors - 1.0)
+        index = (i * (len(colors) - 1)) / (num_colors - 1.0)
         index_int = int(index)
         alpha = index - float(index_int)
 
         print alpha
-
 
         if alpha > 0:
             r = (1.0 - alpha) * colors[index_int][0] + alpha * colors[index_int + 1][0]
@@ -252,16 +253,17 @@ class WaveformImage(object):
     Given peaks and spectral centroids from the AudioProcessor, this class will construct
     a wavefile image which can be saved as PNG.
     """
+
     def __init__(self, image_width, image_height, palette=1):
 
         if image_height % 2 == 0:
             raise Exception, "Height should be uneven: images look much better at uneven height"
 
-        #background_color = (245, 245, 245, 255)
+        # background_color = (245, 245, 245, 255)
         background_color = (255, 255, 255, 255)
         colors = [
-                    (255,255,255, 0),
-                 ]
+            (255, 255, 255, 0),
+        ]
 
         self.image = Image.new("RGBA", (image_width, image_height), background_color)
 
@@ -277,7 +279,7 @@ class WaveformImage(object):
     def color_from_value(self, value):
         """ given a value between 0 and 1, return an (r,g,b) tuple """
 
-        return ImageColor.getrgb("hsl(%d,%d%%,%d%%)" % (int( (1.0 - value) * 360 ), 80, 50))
+        return ImageColor.getrgb("hsl(%d,%d%%,%d%%)" % (int((1.0 - value) * 360), 80, 50))
 
     # this one called by main function (for every pixel in x-dimension)
     def draw_peaks(self, x, peaks, spectral_centroid):
@@ -287,17 +289,17 @@ class WaveformImage(object):
         y1 = self.image_height * 0.5 - peaks[0] * (self.image_height - 14) * 0.5
         y2 = self.image_height * 0.5 - peaks[1] * (self.image_height - 14) * 0.5
 
-        line_color = self.color_lookup[int(spectral_centroid*255.0)]
+        line_color = self.color_lookup[int(spectral_centroid * 255.0)]
         line_color = line_color + (ALPHA_BASE,)
 
-        #print 'color:',
-        #print line_color
+        # print 'color:',
+        # print line_color
 
 
-        if self.previous_y != None:
+        if self.previous_y:
             self.draw.line([self.previous_x, self.previous_y, x, y1, x, y2], line_color)
         else:
-            #pass
+            # pass
             self.draw.line([x, y1, x, y2], line_color)
 
         self.previous_x, self.previous_y = x, y2
@@ -312,28 +314,27 @@ class WaveformImage(object):
         y_max_int = int(y_max)
         alpha = y_max - y_max_int
 
-
-        if alpha > 0.0 and alpha < 1.0 and y_max_int + 1 < self.image_height:
+        if 0.0 < alpha < 1.0 and y_max_int + 1 < self.image_height:
             current_pix = self.pix[x, y_max_int + 1]
 
-            r = int((1-alpha)*current_pix[0] + alpha*color[0])
-            g = int((1-alpha)*current_pix[1] + alpha*color[1])
-            b = int((1-alpha)*current_pix[2] + alpha*color[2])
+            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
 
-            self.pix[x, y_max_int + 1] = (r,g,b, ALPHA_BASE)
+            self.pix[x, y_max_int + 1] = (r, g, b, ALPHA_BASE)
 
         y_min = min(y1, y2)
         y_min_int = int(y_min)
         alpha = 1.0 - (y_min - y_min_int)
 
-        if alpha > 0.0 and alpha < 1.0 and y_min_int - 1 >= 0:
+        if 0.0 < alpha < 1.0 and y_min_int - 1 >= 0:
             current_pix = self.pix[x, y_min_int - 1]
 
-            r = int((1-alpha)*current_pix[0] + alpha*color[0])
-            g = int((1-alpha)*current_pix[1] + alpha*color[1])
-            b = int((1-alpha)*current_pix[2] + alpha*color[2])
+            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
 
-            self.pix[x, y_min_int - 1] = (r,g,b, ALPHA_BASE)
+            self.pix[x, y_min_int - 1] = (r, g, b, ALPHA_BASE)
 
     def draw_anti_aliased_pixels(self, x, y1, y2, color):
         """ vertical anti-aliasing at y1 and y2 """
@@ -342,45 +343,46 @@ class WaveformImage(object):
         y_max_int = int(y_max)
         alpha = y_max - y_max_int
 
-
-        if alpha > 0.0 and alpha < 1.0 and y_max_int + 1 < self.image_height:
+        if 0.0 < alpha < 1.0 and y_max_int + 1 < self.image_height:
             current_pix = self.pix[x, y_max_int + 1]
 
-            r = int((1-alpha)*current_pix[0] + alpha*color[0])
-            g = int((1-alpha)*current_pix[1] + alpha*color[1])
-            b = int((1-alpha)*current_pix[2] + alpha*color[2])
+            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
 
-            self.pix[x, y_max_int + 1] = (r,g,b)
+            self.pix[x, y_max_int + 1] = (r, g, b)
 
         y_min = min(y1, y2)
         y_min_int = int(y_min)
         alpha = 1.0 - (y_min - y_min_int)
 
-        if alpha > 0.0 and alpha < 1.0 and y_min_int - 1 >= 0:
+        if 0.0 < alpha < 1.0 and y_min_int - 1 >= 0:
             current_pix = self.pix[x, y_min_int - 1]
 
-            r = int((1-alpha)*current_pix[0] + alpha*color[0])
-            g = int((1-alpha)*current_pix[1] + alpha*color[1])
-            b = int((1-alpha)*current_pix[2] + alpha*color[2])
+            r = int((1 - alpha) * current_pix[0] + alpha * color[0])
+            g = int((1 - alpha) * current_pix[1] + alpha * color[1])
+            b = int((1 - alpha) * current_pix[2] + alpha * color[2])
 
-            self.pix[x, y_min_int - 1] = (r,g,b)
+            self.pix[x, y_min_int - 1] = (r, g, b)
 
     def save(self, filename):
         # draw a zero "zero" line
         a = 25
         for x in range(self.image_width):
-            self.pix[x, self.image_height/2] = tuple(map(lambda p: p+a, self.pix[x, self.image_height/2]))
+            self.pix[x, self.image_height / 2] = tuple(map(lambda p: p + a, self.pix[x, self.image_height / 2]))
 
         try:
             self.image.save(filename)
         except Exception, e:
             print e
 
+
 class SpectrogramImage(object):
     """
     Given spectra from the AudioProcessor, this class will construct a wavefile image which
     can be saved as PNG.
     """
+
     def __init__(self, image_width, image_height, fft_size):
         self.image_width = image_width
         self.image_height = image_height
@@ -390,19 +392,18 @@ class SpectrogramImage(object):
 
         colors = [
             (0, 0, 0, 0),
-            (58/4,68/4,65/4, 0),
-            (80/2,100/2,153/2, 0),
-            (90,180,100, 0),
-            (224,224,44,0),
-            (255,60,30,0),
-            (255,255,255,0)
-         ]
+            (58 / 4, 68 / 4, 65 / 4, 0),
+            (80 / 2, 100 / 2, 153 / 2, 0),
+            (90, 180, 100, 0),
+            (224, 224, 44, 0),
+            (255, 60, 30, 0),
+            (255, 255, 255, 0)
+        ]
 
         alt_colors = [
             (255, 255, 255, 255),
             (0, 0, 0, 0),
         ]
-
 
         self.palette = interpolate_colors(colors, flat=False, num_colors=256)
 
@@ -415,10 +416,10 @@ class SpectrogramImage(object):
         y_min = math.log10(f_min)
         y_max = math.log10(f_max)
         for y in range(self.image_height):
-            freq = math.pow(10.0, y_min + y / (image_height - 1.0) *(y_max - y_min))
-            bin = freq / 22050.0 * (self.fft_size/2 + 1)
+            freq = math.pow(10.0, y_min + y / (image_height - 1.0) * (y_max - y_min))
+            bin = freq / 22050.0 * (self.fft_size / 2 + 1)
 
-            if bin < self.fft_size/2:
+            if bin < self.fft_size / 2:
                 alpha = bin - int(bin)
 
                 self.y_to_bin.append((int(bin), alpha * 255))
@@ -431,20 +432,19 @@ class SpectrogramImage(object):
     def draw_spectrum(self, x, spectrum):
         # for all frequencies, draw the pixels
         for (index, alpha) in self.y_to_bin:
-            self.pixels.append( self.palette[int((255.0-alpha) * spectrum[index] + alpha * spectrum[index + 1])] )
+            self.pixels.append(self.palette[int((255.0 - alpha) * spectrum[index] + alpha * spectrum[index + 1])])
 
         # if the FFT is too small to fill up the image, fill with black to the top
-        for y in range(len(self.y_to_bin), self.image_height): #@UnusedVariable
+        for y in range(len(self.y_to_bin), self.image_height):  # @UnusedVariable
             self.pixels.append(self.palette[0])
 
     def save(self, filename, quality=80):
-        #assert filename.lower().endswith(".jpg")
+        # assert filename.lower().endswith(".jpg")
         self.image.putdata(self.pixels)
         self.image.transpose(Image.ROTATE_90).save(filename, quality=quality)
 
 
 def create_waveform_image(src, dst):
-
     image_width = 3600
     image_height = 601
     fft_size = 2048
@@ -459,15 +459,13 @@ def create_waveform_image(src, dst):
     samples_per_pixel = processor.audio_file.nframes / float(image_width)
 
     waveform = WaveformImage(image_width, image_height, palette=4)
-    #spectrogram = SpectrogramImage(image_width, image_height, fft_size)
+    # spectrogram = SpectrogramImage(image_width, image_height, fft_size)
 
     for x in range(image_width):
-
-
         seek_point = int(x * samples_per_pixel)
         next_seek_point = int((x + 1) * samples_per_pixel)
 
-        #(spectral_centroid, db_spectrum) = processor.spectral_centroid(seek_point)
+        # (spectral_centroid, db_spectrum) = processor.spectral_centroid(seek_point)
         peaks = processor.peaks(seek_point, next_seek_point)
 
         # hackish... set to 1 to make monochrome
@@ -475,13 +473,12 @@ def create_waveform_image(src, dst):
 
         print (peaks, spectral_centroid)
 
-
         waveform.draw_peaks(x, peaks, spectral_centroid)
 
     waveform.save(dst)
 
-def calculate_peaks(src):
 
+def calculate_peaks(src):
     fft_size = 1024
 
     processor = AudioProcessor(src, fft_size, numpy.hanning)
@@ -498,22 +495,19 @@ def calculate_peaks(src):
 
     return peak_data
 
-def create_spectrogram_image(src, dst):
 
+def create_spectrogram_image(src, dst):
     image_width = 1800
     image_height = 301
     fft_size = 2048
 
-
     processor = AudioProcessor(src, fft_size, numpy.hanning)
     samples_per_pixel = processor.audio_file.nframes / float(image_width)
 
-    #waveform = WaveformImage(image_width, image_height, palette=4)
+    # waveform = WaveformImage(image_width, image_height, palette=4)
     spectrogram = SpectrogramImage(image_width, image_height, fft_size)
 
     for x in range(image_width):
-
-
         seek_point = int(x * samples_per_pixel)
         next_seek_point = int((x + 1) * samples_per_pixel)
 

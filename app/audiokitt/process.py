@@ -2,12 +2,13 @@ from django_rq import job
 
 from .pipeline import Pipeline
 
+
 def run_processing_pipeline(instance):
     return pipeline_task.delay(instance)
 
+
 @job
 def pipeline_task(instance):
-
     from .models import Analyse
 
     p = Pipeline(instance.file.path)

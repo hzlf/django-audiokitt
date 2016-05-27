@@ -1,12 +1,11 @@
-
 import magic
 import os
 
 from essentia.standard import *
 from essentia import Pool
 
-def rhythm(path, audio):
 
+def rhythm(path, audio):
     bpm_fn = RhythmExtractor()
     bpm = bpm_fn(audio)[0]
 
@@ -30,8 +29,8 @@ def rhythm(path, audio):
 
     return data
 
-def tonal(path, audio):
 
+def tonal(path, audio):
     fn = TonalExtractor()
     res = fn(audio)
 
@@ -44,9 +43,9 @@ def tonal(path, audio):
 
     return data
 
+
 def level(path, audio):
     res = ReplayGain()(audio)
-
 
     data = {
         'level': {

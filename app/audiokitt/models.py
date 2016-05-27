@@ -13,7 +13,6 @@ from django.utils.translation import ugettext as _
 from django_extensions.db.fields import CreationDateTimeField, ModificationDateTimeField
 from django_extensions.db.fields.json import JSONField
 
-
 # from django.contrib.postgres.fields import JSONField
 
 
@@ -80,7 +79,6 @@ class Analyse(StatusModelMixin, TimestampedModelMixin, models.Model):
         if self.file:
             return os.path.basename(self.file.path)
 
-
     def process(self):
         log.debug('processing pk: {}'.format(self.pk))
         Analyse.objects.filter(pk=self.pk).update(status=Analyse.STATUS_PROCESSING)
@@ -88,7 +86,6 @@ class Analyse(StatusModelMixin, TimestampedModelMixin, models.Model):
         data = run_processing_pipeline(self)
 
         print(data)
-
 
         pass
 
@@ -102,7 +99,6 @@ class Analyse(StatusModelMixin, TimestampedModelMixin, models.Model):
 
 @receiver(post_save, sender=Analyse)
 def analyse_post_save(instance, created, **kwargs):
-
     log.debug('post save: {}'.format(instance.file.path))
     if created:
         run_processing_pipeline(instance)

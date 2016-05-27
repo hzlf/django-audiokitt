@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import hashlib
 
+
 def md5_for_file(file):
     """
     :param file
