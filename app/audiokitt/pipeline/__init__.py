@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
+import logging
 import essentia.standard
 from essentia.standard import *
 
@@ -8,6 +8,7 @@ from django.conf import settings
 
 from ..util import module_member
 
+log = logging.getLogger(__name__)
 
 DEFAULT_PIPELINE = [
     'audiokitt.pipeline.base.fileinfo',
@@ -27,7 +28,7 @@ class Pipeline(object):
     def __init__(self, path, tasks=None):
         self.path = path
         self.audio = None
-        self.tasks = tasks or DEFAULT_PIPELINE
+        self.tasks = tasks or PIPELINE
 
     def audio_from_path(self, path):
 
@@ -46,9 +47,10 @@ class Pipeline(object):
 
         for task in self.tasks:
             task_fun = module_member(task)
-            task_data = task_fun(self.path, self.audio)
-            data.update(task_data)
-
-        print(data)
+            try:
+                task_data = task_fun(self.path, self.audio)
+                data.update(task_data)
+            except Exception as e:
+                log.warning('pipeline error: {0} - {1}'.format(task, e))
 
         return data
