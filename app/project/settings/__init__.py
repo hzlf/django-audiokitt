@@ -20,6 +20,10 @@ include(
     'components/12-db.py',
     'components/13-api.py',
     'components/30-logging.py',
-    site_settings,
+    optional(site_settings),
+
+    # via server based settings in etc (placed by ansible deployment tasks)
+    optional('/etc/audiokitt/application-settings.py'),
+
     scope=locals()
 )
