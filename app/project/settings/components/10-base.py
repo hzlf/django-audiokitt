@@ -37,6 +37,14 @@ STATICFILES_FINDERS = (
 )
 
 INSTALLED_APPS = [
+
+    'django_slick_admin',
+
+    'admin_tools',
+    #'admin_tools.theming',
+    #'admin_tools.menu',
+    'admin_tools.dashboard',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -50,7 +58,9 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_auth',
     'audiokitt',
+    'app_name',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -73,8 +83,9 @@ AUTH_USER_MODEL = 'base.User'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+        ],
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -82,17 +93,26 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'admin_tools.template_loaders.Loader',
+                'django.template.loaders.app_directories.Loader',
+                'django.template.loaders.eggs.Loader',
+            ],
+
         },
     },
 ]
+
+
+
+
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
-    #{
-    #    'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    #},
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
@@ -101,5 +121,5 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-
+ADMIN_TOOLS_INDEX_DASHBOARD = 'base.dashboard.AdminIndexDashboard'
+ADMIN_TOOLS_APP_INDEX_DASHBOARD = 'base.dashboard.AdminAppIndexDashboard'

@@ -21,9 +21,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             'url': {'lookup_field': 'uuid'}
         }
 
-
-
-# ViewSets define the view behavior.
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -33,9 +30,6 @@ class UserViewSet(viewsets.ModelViewSet):
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
 
-
 router.register(r'user', UserViewSet)
 router.register(r'inquiry', InquiryViewSet)
 router.register(r'analyse', AnalyseViewSet)
-
-

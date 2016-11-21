@@ -7,7 +7,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch.dispatcher import receiver
 from django.utils.translation import ugettext as _
 from django_extensions.db.fields import CreationDateTimeField, ModificationDateTimeField
@@ -24,8 +24,11 @@ log = logging.getLogger(__name__)
 
 def get_upload_path(instance, filename):
     filename, extension = os.path.splitext(filename)
-    folder = "audiokitt/inquiry/%s/" % '/'.join(str(instance.uuid).split('-'))
-    return os.path.join(folder, "%s%s" % (filename.lower(), extension.lower()))
+    class_name = instance.__class__.__name__.lower()
+
+    folder = os.path.join('audiokitt', class_name, '/'.join(str(instance.uuid).split('-')))
+
+    return os.path.join(folder, "%s%s" % ('base', extension.lower()))
 
 
 class StatusModelMixin(models.Model):
@@ -101,6 +104,12 @@ def analyse_post_save(instance, created, **kwargs):
         run_processing_pipeline(instance)
 
 
+@receiver(pre_delete, sender=Analyse)
+def analyse_pre_delete(instance, **kwargs):
+    log.debug('pre delete: {}'.format(instance.file.path))
+    instance.file.delete(False)
+
+
 class Inquiry(TimestampedModelMixin, models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.SET_NULL)
@@ -116,6 +125,11 @@ class Inquiry(TimestampedModelMixin, models.Model):
 
     def __str__(self):
         return '{}'.format(self.filename)
+
+    @property
+    def directory(self):
+        if self.file:
+            return os.path.basename(self.file.path)
 
     @property
     def filename(self):
@@ -142,7 +156,6 @@ class Inquiry(TimestampedModelMixin, models.Model):
         import datetime
         return datetime.datetime.now()
 
-
 @receiver(pre_save, sender=Inquiry)
 def inquiry_pre_save(instance, **kwargs):
     log.debug('pre save: {}'.format(instance.file.path))
@@ -158,3 +171,10 @@ def inquiry_pre_save(instance, **kwargs):
             analyse.save()
 
             instance.analyse = analyse
+
+
+@receiver(pre_delete, sender=Inquiry)
+def inquiry_pre_delete(instance, **kwargs):
+    log.debug('pre delete: {}'.format(instance.file.path))
+    instance.file.delete(False)
+

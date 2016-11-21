@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import essentia.standard
-from essentia.standard import *
+#import essentia.standard
+#from essentia.standard import *
 
 from django.conf import settings
 

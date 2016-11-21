@@ -21,12 +21,23 @@ from django.conf import settings
 from .urls_api import router
 
 urlpatterns = [
+    #url(r'^api/v1/auth/', include('rest_auth.urls')),
+    url(r'^api/v1/auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^api/v1/', include(router.urls)),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^admin-tasks/', include('app_name.urls', namespace='app_name')),
     url(r'^django-rq/', include('django_rq.urls')),
     #url(r'^api/audiokitt/', include('audiokitt.urls', namespace='audiokitt')),
     url(r'^admin/', admin.site.urls),
+    url(r'^admin_tools/', include('admin_tools.urls')),
 ]
+
+
+from audiokitt.views import LatestObjectView
+
+urlpatterns += [
+    url(r'^api/v1/latest/$', LatestObjectView.as_view()),
+]
+
 
 if settings.DEBUG:
     urlpatterns = patterns('',

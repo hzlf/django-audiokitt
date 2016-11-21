@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from rest_framework import mixins, viewsets, status
+from rest_framework import mixins, viewsets, status, views
+from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
@@ -79,3 +80,11 @@ class AnalyseViewSet(mixins.RetrieveModelMixin,
         if self.action == 'retrieve':
             return AnalyseDetailSerializer
         return AnalyseListSerializer
+
+
+class LatestObjectView(RetrieveAPIView):
+    queryset = Analyse.objects.all()
+    serializer_class = AnalyseDetailSerializer
+
+    def get_object(self, *args, **kwargs):
+        return self.queryset.first()
